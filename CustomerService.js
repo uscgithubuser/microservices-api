@@ -73,5 +73,5 @@ app.delete('/products/:productId', (req, res) => {
 
 
 app.listen(port, () => {
-    console.log(`Product service running on port ${port}`);
+    console.log(`Customer service running on port ${port}`);
 });
