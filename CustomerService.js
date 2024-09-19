@@ -40,3 +40,38 @@ app.get('/products/:productId', (req, res) => {
 
     return res.json(product);
 });
+
+app.put('/products/:productId', (req, res) => {
+    const productId = req.params.productId;
+    const { name, price, description } = req.body;
+
+    const product = findProductById(productId);
+    if (!product) {
+        return res.status(404).json({ message: 'Product not found.' });
+    }
+
+
+    product.name = name || product.name;
+    product.price = price || product.price;
+    product.description = description || product.description;
+
+    return res.json(product);
+});
+
+app.delete('/products/:productId', (req, res) => {
+    const productId = req.params.productId;
+    const productIndex = products.findIndex(product => product.id === productId);
+
+    if (productIndex === -1) {
+        return res.status(404).json({ message: 'Product not found.' });
+    }
+
+   
+    products.splice(productIndex, 1);
+    return res.status(204).send();
+});
+
+
+app.listen(port, () => {
+    console.log(`Product service running on port ${port}`);
+});
