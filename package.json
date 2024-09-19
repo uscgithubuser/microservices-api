@@ -4,12 +4,20 @@
   "description": "Exercise 3: Designing and Building a Microservices API",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:product": "node ProductService.js",
+    "start:customer": "node CustomerService.js",
+    "start:order": "node OrderService.js",
+    "start": "concurrently \"npm run start:product\" \"npm run start:customer\" \"npm run start:order\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.7.7",
     "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "nodemon": "^3.1.5"
   }
 }
