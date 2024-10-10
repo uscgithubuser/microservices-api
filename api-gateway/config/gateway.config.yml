@@ -1,0 +1,65 @@
+http:
+  port: 8080
+admin:
+  port: 9876
+  host: localhost
+
+apiEndpoints:
+  products:
+    host: localhost
+    paths: /products/*
+  customers:
+    host: localhost
+    paths: /customers/*
+  orders:
+    host: localhost
+    paths: /orders/*
+
+serviceEndpoints:
+  productService:
+    url: http://localhost:3000
+  customerService:
+    url: http://localhost:3001
+  orderService:
+    url: http://localhost:3002
+
+policies:
+  - basic-auth
+  - cors
+  - expression
+  - key-auth
+  - log
+  - oauth2
+  - proxy
+  - rate-limit
+
+pipelines:
+  productPipeline:
+    apiEndpoints:
+      - products
+    policies:
+      - jwt  # Add the JWT policy here
+      - proxy:
+          - action:
+              serviceEndpoint: productService
+              changeOrigin: true
+
+  customerPipeline:
+    apiEndpoints:
+      - customers
+    policies:
+      - jwt  # Add the JWT policy here
+      - proxy:
+          - action:
+              serviceEndpoint: customerService
+              changeOrigin: true
+
+  orderPipeline:
+    apiEndpoints:
+      - orders
+    policies:
+      - jwt  # Add the JWT policy here
+      - proxy:
+          - action:
+              serviceEndpoint: orderService
+              changeOrigin: true

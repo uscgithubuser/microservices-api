@@ -1,5 +1,6 @@
 const express = require('express');
 const axios = require('axios');
+const jwt = require('jsonwebtoken'); // Import jsonwebtoken
 const app = express();
 const port = 3002;
 
@@ -7,7 +8,27 @@ app.use(express.json());
 
 let orders = [];
 
+// JWT secret key
+const SECRET_KEY = 'secret'; // Use the same secret key for JWT
 
+// Middleware to authenticate JWT
+const authenticateJWT = (req, res, next) => {
+    const token = req.headers['authorization']?.split(' ')[1]; // Bearer <token>
+
+    if (!token) {
+        return res.sendStatus(403); // Forbidden
+    }
+
+    jwt.verify(token, SECRET_KEY, (err, user) => { // Use the secret key
+        if (err) {
+            return res.sendStatus(403); // Forbidden
+        }
+        req.user = user; // Store user info for further use
+        next();
+    });
+};
+
+// Verify if the customer exists
 const verifyCustomer = async (customerId) => {
     try {
         const response = await axios.get(`http://localhost:3001/customers/${customerId}`);
@@ -21,7 +42,7 @@ const verifyCustomer = async (customerId) => {
     }
 };
 
-
+// Verify if the product exists
 const verifyProduct = async (productId) => {
     try {
         const response = await axios.get(`http://localhost:3000/products/${productId}`);
@@ -35,8 +56,13 @@ const verifyProduct = async (productId) => {
     }
 };
 
+// Create a new order (Customers only)
+app.post('/orders', authenticateJWT, async (req, res) => {
+    // Ensure only customers can create orders
+    if (req.user.role !== 'customer') {
+        return res.sendStatus(403); // Forbidden
+    }
 
-app.post('/orders', async (req, res) => {
     const { id, customerId, productId, quantity } = req.body;
 
     if (!id || !customerId || !productId || !quantity) {
@@ -55,8 +81,13 @@ app.post('/orders', async (req, res) => {
     }
 });
 
+// Get an order by ID (Admins only)
+app.get('/orders/:orderId', authenticateJWT, (req, res) => {
+    // Only admins can view orders by ID
+    if (req.user.role !== 'admin') {
+        return res.sendStatus(403); // Forbidden
+    }
 
-app.get('/orders/:orderId', (req, res) => {
     const orderId = req.params.orderId;
     const order = orders.find(order => order.id === orderId);
 
@@ -67,8 +98,13 @@ app.get('/orders/:orderId', (req, res) => {
     return res.json(order);
 });
 
+// Update an order by ID (Customers only)
+app.put('/orders/:orderId', authenticateJWT, (req, res) => {
+    // Ensure only customers can update orders
+    if (req.user.role !== 'customer') {
+        return res.sendStatus(403); // Forbidden
+    }
 
-app.put('/orders/:orderId', (req, res) => {
     const orderId = req.params.orderId;
     const { quantity } = req.body;
 
@@ -81,8 +117,13 @@ app.put('/orders/:orderId', (req, res) => {
     return res.json(order);
 });
 
+// Delete an order by ID (Admins only)
+app.delete('/orders/:orderId', authenticateJWT, (req, res) => {
+    // Only admins can delete orders
+    if (req.user.role !== 'admin') {
+        return res.sendStatus(403); // Forbidden
+    }
 
-app.delete('/orders/:orderId', (req, res) => {
     const orderId = req.params.orderId;
     const orderIndex = orders.findIndex(order => order.id === orderId);
 
@@ -94,6 +135,7 @@ app.delete('/orders/:orderId', (req, res) => {
     return res.status(204).send();
 });
 
+// Start the server
 app.listen(port, () => {
     console.log(`Order service running on port ${port}`);
 });
